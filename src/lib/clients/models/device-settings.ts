@@ -1,16 +1,16 @@
-
 /**
  * Represents the HTTP API model for device settings.
  */
 export interface DeviceSettings {
-
-    /**
-     * Gets or sets a value that determines whether the pull spring is enabled for this lock.
-     */
-    pullSpringEnabled: boolean;
-
-    /**
-     * Gets or sets a value that determines whether the automatic pull spring is enabled when unlocking.
-     */
-    autoPullSpringEnabled: boolean;
+    autoLockEnabled: number;
+    autoLockDelay: number;
+    autoLockImplicitEnabled: number;
+    autoLockImplicitDelay: number;
+    pullSpringEnabled: number;
+    pullSpringDuration: number;
+    autoPullSpringEnabled: number;
+    postponedLockEnabled: number;
+    postponedLockDelay: number;
+    buttonLockEnabled: number;
+    buttonUnlockEnabled: number;
 }

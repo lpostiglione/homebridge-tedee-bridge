@@ -1,0 +1,1164 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Tedee Bridge API",
+    "description": "The API is exposed by Tedee Bridge over HTTP and allows you to control paired devices in your local network.",
+    "contact": {
+      "email": "support@tedee.com",
+      "name": "us"
+    },
+    "version": "1.2"
+  },
+  "externalDocs": {
+    "description": "Tedee Bridge API Documentation",
+    "url": "https://docs.tedee.com/bridge-api"
+  },
+  "servers": [
+    {
+      "url": "/v1.0"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Bridge",
+      "description": "Everything about Tedee Bridge and its state"
+    },
+    {
+      "name": "Lock",
+      "description": "Everything about Tedee Locks paired with Tedee Bridge"
+    },
+    {
+      "name": "Callback",
+      "description": "Everything about callback servers (webhooks)"
+    }
+  ],
+  "paths": {
+    "/bridge": {
+      "get": {
+        "tags": [
+          "Bridge"
+        ],
+        "summary": "Bridge details",
+        "description": "Returns detailed information about Bridge and its connection state",
+        "operationId": "getBridgeDetails",
+        "responses": {
+          "200": {
+            "description": "successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BridgeDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvalidToken"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "api_token": []
+          }
+        ]
+      }
+    },
+    "/lock": {
+      "get": {
+        "tags": [
+          "Lock"
+        ],
+        "summary": "List of Tedee Locks",
+        "description": "Shows the list of Tedee Locks paired with Bridge.",
+        "operationId": "getLockList",
+        "responses": {
+          "200": {
+            "description": "successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/LockDetails"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvalidToken"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "api_token": []
+          }
+        ]
+      }
+    },
+    "/lock/{deviceId}": {
+      "get": {
+        "tags": [
+          "Lock"
+        ],
+        "summary": "Selected Tedee Lock details",
+        "description": "Shows details for selected Tedee Lock",
+        "operationId": "getLockById",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/deviceId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LockDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvalidToken"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "device not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeviceNotFound"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "api_token": []
+          }
+        ]
+      }
+    },
+    "/lock/{deviceId}/lock": {
+      "post": {
+        "tags": [
+          "Lock"
+        ],
+        "summary": "Locks the Tedee lock",
+        "description": "Sends 'lock' command to the selected Tedee Lock",
+        "operationId": "postLock",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/deviceId"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "successful operation (NO CONTENT)"
+          },
+          "401": {
+            "description": "unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvalidToken"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "device not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeviceNotFound"
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "device is disconnected",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeviceDisconnected"
+                }
+              }
+            }
+          },
+          "406": {
+            "description": "device reported and error via BLE interface",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeviceBleError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "api_token": []
+          }
+        ]
+      }
+    },
+    "/lock/{deviceId}/unlock": {
+      "post": {
+        "tags": [
+          "Lock"
+        ],
+        "summary": "Unlocks the Tedee Lock",
+        "description": "Sends 'unlock' command to the selected Tedee Lock",
+        "operationId": "postUnlock",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/deviceId"
+          },
+          {
+            "name": "mode",
+            "in": "header",
+            "description": "Unlock mode:<br><br>0 - (or no parameter set) - Normal. From close position: unlock only or unlock with auto pull if enabled. From open position: nothing.<br>2 - Force. Force movement until lock hits resistance.<br>3 - Without Pull. From close position: unlock only without auto pull. From open position: nothing.<br>4 - Unlock or Pull. From close position: unlock only or unlock with auto pull if enabled. From open position: pull.",
+            "schema": {
+              "type": "integer",
+              "enum": [
+                0,
+                2,
+                3,
+                4
+              ],
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "successful operation (NO CONTENT)"
+          },
+          "401": {
+            "description": "unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvalidToken"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "invalid unlock mode value",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error-description": {
+                      "type": "string",
+                      "examples": [
+                        "Invalid param"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "device not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeviceNotFound"
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "device is disconnected",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeviceDisconnected"
+                }
+              }
+            }
+          },
+          "406": {
+            "description": "device reported and error via BLE interface",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeviceBleError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "api_token": []
+          }
+        ]
+      }
+    },
+    "/lock/{deviceId}/pull": {
+      "post": {
+        "tags": [
+          "Lock"
+        ],
+        "summary": "Does the 'Pull Spring'",
+        "description": "Sends 'Pull Spring' command to the selected Tedee Lock",
+        "operationId": "postPull",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/deviceId"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "successful operation (NO CONTENT)"
+          },
+          "401": {
+            "description": "unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvalidToken"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "device not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeviceNotFound"
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "device is disconnected",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeviceDisconnected"
+                }
+              }
+            }
+          },
+          "406": {
+            "description": "device reported and error via BLE interface",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeviceBleError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "api_token": []
+          }
+        ]
+      }
+    },
+    "/callback": {
+      "get": {
+        "tags": [
+          "Callback"
+        ],
+        "summary": "Shows list of predefined event servers (webhooks)",
+        "description": "List of webhooks",
+        "operationId": "getCallback",
+        "responses": {
+          "200": {
+            "description": "successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CallbackDetails"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvalidToken"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "api_token": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "Callback"
+        ],
+        "summary": "Adds event server (webhook)",
+        "description": "Adds callback",
+        "operationId": "postSingleCallback",
+        "requestBody": {
+          "description": "Adds callback record",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CallbackDetailsNoId"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CallbackIDsingle"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvalidToken"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "callback not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CallbackNotFound"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Internal storage of Tedee Bridge is busy",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CallbackConflict"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "api_token": []
+          }
+        ]
+      },
+      "put": {
+        "tags": [
+          "Callback"
+        ],
+        "summary": "Sets multiple event servers (webhooks) at once",
+        "description": "Add a new set of callbacks",
+        "operationId": "putMultipleCallback",
+        "requestBody": {
+          "description": "Sets callbacks at once",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/CallbackDetailsNoId"
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CallbackIDlist"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvalidToken"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Internal storage of Tedee Bridge is busy",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CallbackConflict"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "api_token": []
+          }
+        ]
+      }
+    },
+    "/callback/{callbackId}": {
+      "delete": {
+        "tags": [
+          "Callback"
+        ],
+        "summary": "Deletes selected event server (webhook)",
+        "description": "Deletes callback",
+        "operationId": "deleteCallback",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/callbackId"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful operation (NO CONTENT)"
+          },
+          "401": {
+            "description": "unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvalidToken"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "callback not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CallbackNotFound"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Internal storage of Tedee Bridge is busy",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CallbackConflict"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "api_token": []
+          }
+        ]
+      },
+      "put": {
+        "tags": [
+          "Callback"
+        ],
+        "summary": "Updates event server (webhook)",
+        "description": "Updates selected event server (webhook)",
+        "operationId": "putSelectedCallback",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/callbackId"
+          }
+        ],
+        "requestBody": {
+          "description": "Updates event server (webhook) record",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CallbackDetailsNoId"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "Successful operation (NO CONTENT)"
+          },
+          "401": {
+            "description": "unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvalidToken"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "callback not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CallbackNotFound"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Internal storage of Tedee Bridge is busy",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CallbackConflict"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "api_token": []
+          }
+        ]
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "InvalidToken": {
+        "type": "object",
+        "properties": {
+          "error-description": {
+            "type": "string",
+            "examples": [
+              "Invalid token"
+            ]
+          }
+        }
+      },
+      "DeviceNotFound": {
+        "type": "object",
+        "properties": {
+          "error-description": {
+            "type": "string",
+            "examples": [
+              "Device not found"
+            ]
+          }
+        }
+      },
+      "DeviceDisconnected": {
+        "type": "object",
+        "properties": {
+          "error-description": {
+            "type": "string",
+            "examples": [
+              "Device is disconnected"
+            ]
+          }
+        }
+      },
+      "DeviceBleError": {
+        "type": "object",
+        "properties": {
+          "error-code": {
+            "type": "integer",
+            "format": "int32",
+            "examples": [
+              2
+            ]
+          },
+          "error-description": {
+            "type": "string",
+            "examples": [
+              "BLE API error"
+            ]
+          }
+        }
+      },
+      "CallbackNotFound": {
+        "type": "object",
+        "properties": {
+          "error-description": {
+            "type": "string",
+            "examples": [
+              "Callback not found"
+            ]
+          }
+        }
+      },
+      "CallbackConflict": {
+        "type": "object",
+        "properties": {
+          "error-description": {
+            "type": "string",
+            "examples": [
+              "Busy"
+            ]
+          }
+        }
+      },
+      "BridgeDetails": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Name of Tedee Bridge",
+            "examples": [
+              "Bridge-8C14"
+            ]
+          },
+          "currentTime": {
+            "type": "string",
+            "description": "Bridge current date & time in UTC format",
+            "examples": [
+              "2023-07-25T14:41:48.825Z"
+            ]
+          },
+          "serialNumber": {
+            "type": "string",
+            "description": "Serial Number",
+            "examples": [
+              "19420103-000006"
+            ]
+          },
+          "ssid": {
+            "type": "string",
+            "description": "WiFi service set identifier",
+            "examples": [
+              "TedeeWiFi"
+            ]
+          },
+          "isConnected": {
+            "type": "integer",
+            "enum": [
+              0,
+              1
+            ],
+            "description": "0 - disconnected, 1 - connected",
+            "examples": [
+              1
+            ]
+          },
+          "version": {
+            "type": "string",
+            "description": "Bridge Firmware version",
+            "examples": [
+              "2.2.11098"
+            ]
+          },
+          "wifiVersion": {
+            "type": "string",
+            "description": "WiFi Module Firmware version",
+            "examples": [
+              "35.2.2.4"
+            ]
+          }
+        }
+      },
+      "LockDetails": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Lock ID (device ID)",
+            "examples": [
+              10
+            ]
+          },
+          "name": {
+            "type": "string",
+            "description": "Name of Tedee Lock",
+            "examples": [
+              "Lock-9A25"
+            ]
+          },
+          "type": {
+            "type": "integer",
+            "enum": [
+              2,
+              4
+            ],
+            "description": "Lock type: 2 - Lock PRO, 4 - Lock GO",
+            "examples": [
+              4
+            ]
+          },
+          "serialNumber": {
+            "type": "string",
+            "description": "Serial Number",
+            "examples": [
+              "22510401-000050"
+            ]
+          },
+          "isConnected": {
+            "type": "integer",
+            "enum": [
+              0,
+              1
+            ],
+            "description": "0 - disconnected, 1 - connected",
+            "examples": [
+              1
+            ]
+          },
+          "rssi": {
+            "type": "integer",
+            "format": "int32",
+            "description": "RSSI signal in dB",
+            "examples": [
+              -45
+            ]
+          },
+          "deviceRevision": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Settings revision number",
+            "examples": [
+              18
+            ]
+          },
+          "version": {
+            "type": "string",
+            "description": "Firmware version",
+            "examples": [
+              "2.0.10724"
+            ]
+          },
+          "state": {
+            "type": "integer",
+            "description": "Lock state: 0-uncalibrated, 1-calibration, 2-open, 3-partially_open, 4-opening, 5-closing, 6-closed, 7-pull_spring, 8-pulling, 9-unknown, 255-unpulling",
+            "enum": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5,
+              6,
+              7,
+              8,
+              9,
+              255
+            ],
+            "examples": [
+              6
+            ]
+          },
+          "jammed": {
+            "type": "integer",
+            "description": "0-not jammed, 1-jammed",
+            "enum": [
+              0,
+              1
+            ],
+            "examples": [
+              0
+            ]
+          },
+          "batteryLevel": {
+            "type": "integer",
+            "format": "int32",
+            "description": "battery level in percentage (0-100) or 255 if level is not known",
+            "examples": [
+              90
+            ]
+          },
+          "isCharging": {
+            "type": "integer",
+            "description": "0-not charging, 1-charging",
+            "enum": [
+              0,
+              1
+            ],
+            "examples": [
+              0
+            ]
+          },
+          "deviceSettings": {
+            "type": "object",
+            "properties": {
+              "autoLockEnabled": {
+                "type": "integer",
+                "enum": [
+                  0,
+                  1
+                ],
+                "description": "Auto lock: 0-disabled, 1-enabled",
+                "examples": [
+                  0
+                ]
+              },
+              "autoLockDelay": {
+                "type": "integer",
+                "format": "int32",
+                "examples": [
+                  60
+                ]
+              },
+              "autoLockImplicitEnabled": {
+                "type": "integer",
+                "enum": [
+                  0,
+                  1
+                ],
+                "description": "Implicit Auto Lock: 0-disabled, 1-enabled",
+                "examples": [
+                  0
+                ]
+              },
+              "autoLockImplicitDelay": {
+                "type": "integer",
+                "format": "int32",
+                "examples": [
+                  5
+                ]
+              },
+              "pullSpringEnabled": {
+                "type": "integer",
+                "enum": [
+                  0,
+                  1
+                ],
+                "description": "Pull Spring: 0-disabled, 1-enabled",
+                "examples": [
+                  0
+                ]
+              },
+              "pullSpringDuration": {
+                "type": "integer",
+                "format": "int32",
+                "examples": [
+                  2
+                ]
+              },
+              "autoPullSpringEnabled": {
+                "type": "integer",
+                "enum": [
+                  0,
+                  1
+                ],
+                "description": "Auto Pull Spring: 0-disabled, 1-enabled",
+                "examples": [
+                  0
+                ]
+              },
+              "postponedLockEnabled": {
+                "type": "integer",
+                "enum": [
+                  0,
+                  1
+                ],
+                "description": "Postponed lock: 0-disabled, 1-enabled",
+                "examples": [
+                  1
+                ]
+              },
+              "postponedLockDelay": {
+                "type": "integer",
+                "format": "int32",
+                "examples": [
+                  5
+                ]
+              },
+              "buttonLockEnabled": {
+                "type": "integer",
+                "enum": [
+                  0,
+                  1
+                ],
+                "description": "Lock by button: 0-disabled, 1-enabled",
+                "examples": [
+                  1
+                ]
+              },
+              "buttonUnlockEnabled": {
+                "type": "integer",
+                "enum": [
+                  0,
+                  1
+                ],
+                "description": "Unlock by button: 0-disabled, 1-enabled",
+                "examples": [
+                  1
+                ]
+              }
+            }
+          }
+        }
+      },
+      "CallbackDetails": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64",
+            "examples": [
+              1
+            ]
+          },
+          "url": {
+            "type": "string",
+            "description": "Callback URL",
+            "examples": [
+              "http://192.168.1.21:8080/events"
+            ]
+          },
+          "method": {
+            "type": "string",
+            "description": "POST or GET",
+            "examples": [
+              "POST"
+            ]
+          },
+          "headers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CallbackHeader"
+            }
+          }
+        }
+      },
+      "CallbackDetailsNoId": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "description": "Callback URL",
+            "examples": [
+              "http://192.168.1.21:8080/events"
+            ]
+          },
+          "method": {
+            "type": "string",
+            "description": "POST or GET",
+            "examples": [
+              "POST"
+            ]
+          },
+          "headers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CallbackHeader"
+            }
+          }
+        }
+      },
+      "CallbackHeader": {
+        "type": "object",
+        "properties": {
+          "header_name": {
+            "type": "string",
+            "examples": [
+              "header_value"
+            ]
+          }
+        }
+      },
+      "CallbackIDsingle": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64",
+            "examples": [
+              1
+            ]
+          }
+        }
+      },
+      "CallbackIDlist": {
+        "type": "integer",
+        "examples": [
+          1
+        ]
+      }
+    },
+    "parameters": {
+      "deviceId": {
+        "name": "deviceId",
+        "in": "path",
+        "description": "Device ID (Tedee Lock ID)",
+        "required": true,
+        "schema": {
+          "type": "integer",
+          "format": "int32"
+        }
+      },
+      "callbackId": {
+        "name": "callbackId",
+        "in": "path",
+        "description": "Callback server (webhook) ID",
+        "required": true,
+        "schema": {
+          "type": "integer",
+          "format": "int32"
+        }
+      }
+    },
+    "securitySchemes": {
+      "api_token": {
+        "type": "apiKey",
+        "name": "api_token",
+        "in": "header",
+        "description": "<big><a target=\"_blank\" href=\"https://docs.tedee.com/bridge-api#tag/Authenticate\">How to: Authenticate</a><br/><a target=\"_blank\" href=\"https://docs.tedee.com/bridge-api#tag/Getting-started/Enabling-Bridge-API\">Enabling Bridge API</a></big><br/><br/>"
+      }
+    }
+  }
+}

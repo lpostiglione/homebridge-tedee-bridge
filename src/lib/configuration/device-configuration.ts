@@ -3,11 +3,15 @@
  * Represents a Tedee device in the homebridge configuration for the plugin.
  */
 export interface DeviceConfiguration {
-
     /**
      * Gets or sets the name of the device (used for config mapping).
      */
     name: string;
+
+    /**
+     * Should this device be hidden from HoneKit
+     */
+    ignored: boolean;
 
     /**
      * Gets or sets a value that determines whether the unlatch (unlocked to unlocked) is enabled.

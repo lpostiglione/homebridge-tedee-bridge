@@ -1,19 +1,21 @@
+import {HomebridgePlatform} from 'homebridge-framework';
+import {Configuration} from './configuration/configuration';
+import {TedeeLockController} from './controllers/tedee-lock-controller';
+import {TedeeLocalApiClient} from './clients/tedee-local-api-client';
+import {Lock} from './clients/models/lock';
+import find from 'local-devices'
+import {createServer, IncomingMessage, Server, ServerResponse} from "http";
+import {WebhookPayload} from "./clients/models/webhook-payload";
+import {CommonDeviceEvent} from "./clients/models/common-device-event";
+import {DeviceBatteryLevelChangedEvent} from "./clients/models/device-battery-level-changed-event";
+import {LockStatusChangedEvent} from "./clients/models/lock-status-changed-event";
+import * as os from "os";
 
-import { HomebridgePlatform } from 'homebridge-framework';
-import { Configuration } from './configuration/configuration';
-import { TedeeLockController } from './controllers/tedee-lock-controller';
-import { TedeeApiClient } from './clients/tedee-api-client';
-import { Lock } from './clients/models/lock';
 
 /**
  * Represents the platform of the plugin.
  */
 export class Platform extends HomebridgePlatform<Configuration> {
-
-    /**
-     * Contains the handle for the update timer.
-     */
-    private updateHandle: any = null;
 
     /**
      * Gets or sets the list of all locks.
@@ -25,13 +27,18 @@ export class Platform extends HomebridgePlatform<Configuration> {
      */
     public controllers = new Array<TedeeLockController>();
 
+
+    private server: Server | undefined;
+
+    private callbackId: number | undefined;
+
     /**
      * Gets the name of the plugin.
      */
     public get pluginName(): string {
-        return 'homebridge-tedee';
-    }    
-    
+        return 'homebridge-tedee-bridge';
+    }
+
     /**
      * Gets the name of the platform which is used in the configuration file.
      */
@@ -42,12 +49,12 @@ export class Platform extends HomebridgePlatform<Configuration> {
     /**
      * Contains the client that is used to communicate via HTTP API.
      */
-    private _apiClient: TedeeApiClient|null = null;
+    private _apiClient: TedeeLocalApiClient | null = null;
 
     /**
      * Gets the client that is used to communicate via HTTP API.
      */
-    public get apiClient(): TedeeApiClient {
+    public get apiClient(): TedeeLocalApiClient {
         if (!this._apiClient) {
             throw new Error('Platform not initialized yet.');
         }
@@ -55,95 +62,236 @@ export class Platform extends HomebridgePlatform<Configuration> {
     }
 
     /**
-     * Updates the devices from the API.
-     */
-    public async updateAsync() {
-        try {
-            this.logger.debug('Syncing locks from the API...');
-
-            // Gets sync information for all locks from the API
-            const lockSyncs = await this.apiClient.syncLocksAsync();
-
-            // Updates the locks
-            for (let controller of this.controllers) {
-                const lock = this.locks.find(l => l.name === controller.name);
-                if (lock) {
-
-                    // Gets the sync information for the lock (via ID)
-                    const lockSync = lockSyncs.find(s => s.id == lock.id);
-                    if (lockSync) {
-                        controller.update(lockSync);
-                    }
-                }
-            }
-
-            this.logger.debug('Locks synced from the API.');
-        } catch (e) {
-            this.logger.warn('Failed to sync locks from API.');
-        }
-    }
-
-    /**
      * Is called when the platform is initialized.
      */
     public async initialize(): Promise<void> {
+
         this.logger.info(`Initializing platform...`);
 
-        // Initializes the configuration
-        this.configuration.tokenUri = 'https://tedee.b2clogin.com/tedee.onmicrosoft.com/oauth2/v2.0/token?p=B2C_1_SignIn_Ropc';
-        this.configuration.maximumTokenRetry = 3;
-        this.configuration.tokenRetryInterval = 2000;
-        this.configuration.apiUri = 'https://api.tedee.com/api/v1.18';
+        this.logger.info(`Discovering tedee bridge...`);
+
+        this.configuration.timeout = this.configuration.timeout || 10000;
         this.configuration.maximumApiRetry = this.configuration.maximumApiRetry || 3;
-        this.configuration.apiRetryInterval = 5000;
-        this.configuration.updateInterval = this.configuration.updateInterval || 15;
+        this.configuration.webhookPort = this.configuration.webhookPort || 3003;
 
-        // As per documentation, the update interval should not be below 10 seconds
-        if (this.configuration.updateInterval < 10) {
-            this.configuration.updateInterval = 10;
-        }
+        let response;
+        if (!this.configuration.bridgeIp) {
+            // Find all local network devices.
+            let devices = await find({skipNameResolution: true});
+            for (var i = 0; i < devices.length; i++) {
+                let elem = devices[i];
+                this.logger.debug('Testing: ' + elem.ip);
+                let testClient = new TedeeLocalApiClient(
+                    elem.ip,
+                    this.configuration.apiKey,
+                    this.configuration.timeout,
+                    0
+                );
+                try {
+                    response = await testClient.checkApiHealth();
+                } catch (e) {
+                    this.logger.debug('Fail!');
+                    continue;
+                }
 
-        // Initializes the client
-        this._apiClient = new TedeeApiClient(this);
-
-        // Gets the locks from the API
-        this.locks = await this.apiClient.getLocksAsync();
-
-        // Cycles over all configured devices and creates the corresponding controllers
-        if (this.configuration.devices) {
-            for (let deviceConfiguration of this.configuration.devices) {
-                if (deviceConfiguration.name) {
-
-                    // Gets the corresponding lock
-                    const lock = this.locks.find(l => l.name === deviceConfiguration.name);
-                    if (lock) {
-
-                        // Creates the new controller for the device and stores it
-                        const tedeeLockController = new TedeeLockController(this, deviceConfiguration, lock);
-                        this.controllers.push(tedeeLockController);
-                    } else {
-                        this.logger.warn(`No device with name '${deviceConfiguration.name}' found in your account.`);
-                    }
-                } else {
-                    this.logger.warn(`Device name missing in the configuration.`);
+                if (response) {
+                    this.configuration.bridgeIp = elem.ip;
+                    this.logger.debug('Pass!');
+                    break;
                 }
             }
         } else {
-            this.logger.warn(`No devices configured.`);
+            let testClient = new TedeeLocalApiClient(
+                this.configuration.bridgeIp,
+                this.configuration.apiKey,
+                this.configuration.timeout,
+                0
+            );
+            try {
+                response = await testClient.checkApiHealth();
+            } catch (e) {
+                this.logger.debug('Fail!');
+            }
         }
 
-        // Initializes the background updates
-        this.updateHandle = setInterval(() => this.updateAsync(), this.configuration.updateInterval * 1000);
+        if (!response) {
+            this.logger.warn('Found no accessible bridge, did you enable API access?');
+            return;
+        }
+
+        this.logger.info(`Found bridge under ${this.configuration.bridgeIp}!`);
+
+        // Initializes the client
+        this._apiClient = new TedeeLocalApiClient(
+            this.configuration.bridgeIp,
+            this.configuration.apiKey,
+            this.configuration.timeout,
+            this.configuration.maximumApiRetry
+        );
+
+        // Gets the locks from the API
+        this.locks = await this.apiClient.getLockList();
+
+        let hasLocks = false;
+        for (let lock of this.locks) {
+            let deviceConfiguration = this.configuration.devices.find(l => l.name === lock.name);
+            if (!deviceConfiguration) {
+                deviceConfiguration = {
+                    name: lock.name,
+                    ignored: false,
+                    unlatchFromUnlockedToUnlocked: true,
+                    unlatchLock: false,
+                    disableUnlock: false,
+                    defaultLockName: lock.name,
+                    defaultLatchName: lock.name + ' Latch'
+                }
+            }
+
+            if (deviceConfiguration.ignored) {
+                continue;
+            }
+
+            // Creates the new controller for the device and stores it
+            const tedeeLockController = new TedeeLockController(this, deviceConfiguration, lock);
+            this.controllers.push(tedeeLockController);
+            hasLocks = true;
+        }
+
+        if (!hasLocks) {
+            return;
+        }
+
+        this.logger.info(`Starting webhook server on port ${this.configuration.webhookPort}...`);
+        this.server = createServer((req, res) => this.handleWebhook(req, res))
+            .listen(this.configuration.webhookPort);
+        this.logger.info(`Webhook server started successfully!`);
+        this.logger.info(`Registering webhook callback...`);
+        const webhookUrl = `http://${this.getHomebridgeIpAddress()}:${this.configuration.webhookPort}/`;
+        this.logger.debug(`Webhook URL: ${webhookUrl}`);
+        let callback;
+        try {
+            callback = await this.apiClient.setMultipleCallbacks([{
+                url: webhookUrl,
+                method: 'POST',
+                headers: [],
+            }]);
+            this.logger.debug(`Callback response: ${JSON.stringify(callback)}`);
+        } catch (e) {
+            this.logger.error('Failed to register webhook callback');
+            this.logger.debug(JSON.stringify(e));
+            return;
+        }
+        this.logger.info(`Webhook callback registered successfully!`);
+        this.logger.debug(`Callback ID: ${callback[0]}`);
+        this.callbackId = callback[0];
+    }
+
+    private getHomebridgeIpAddress() {
+        const networkInterfaces = os.networkInterfaces();
+        for (const name of Object.keys(networkInterfaces)) {
+            for (const net of networkInterfaces[name]) {
+                // Skip over non-IPv4 and internal (i.e. 127.0.0.1) addresses
+                if (net.family === 'IPv4' && !net.internal) {
+                    return net.address;
+                }
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Handles incoming webhook requests for partial updates to a lock.
+     */
+    public async handleWebhook(req: IncomingMessage, res: ServerResponse): Promise<void> {
+        // Parse the incoming request
+        let body = '';
+        for await (const chunk of req) {
+            body += chunk;
+        }
+
+        const payload: WebhookPayload = JSON.parse(body);
+        if (payload.event == "backend-connection-changed" || payload.event == "device-connection-changed") {
+            if (payload.event == "backend-connection-changed") {
+                // @ts-ignore
+                this.logger.info('Webhook: Backend ' + (payload.data.isConnected ? 'connected' : 'disconnected'));
+            } else {
+                // @ts-ignore
+                this.logger.info('Webhook: Device with id ' + payload.data.deviceId + ' ' + (payload.data.isConnected ? 'connected' : 'disconnected'));
+
+            }
+            res.statusCode = 200;
+            res.end('Nevermind ;)');
+            return;
+        }
+
+        // @ts-ignore
+        const data: DeviceBatteryLevelChangedEvent | LockStatusChangedEvent | CommonDeviceEvent = payload.data;
+
+        // Identify the lock that needs to be updated
+        const controller = this.controllers.find(controller => controller.id === data.deviceId);
+        if (!controller) {
+            this.logger.warn('Webhook: Device not found with id ' + data.deviceId);
+            res.statusCode = 404;
+            res.end('Lock not found');
+            return;
+        }
+
+        switch (payload.event) {
+            case "device-settings-changed":
+                this.logger.info('Webhook: Device settings changed for device with id ' + data.deviceId);
+                await controller.updateAsync();
+                break;
+            case "device-battery-fully-charged":
+                this.logger.info('Webhook: Battery fully charged for device with id ' + data.deviceId);
+                controller.updateBattery(100);
+                controller.updateCharging(0);
+                break;
+            case "device-battery-start-charging":
+                this.logger.info('Webhook: Battery started charging for device with id ' + data.deviceId);
+                controller.updateCharging(1);
+                break;
+            case "device-battery-level-changed":
+                this.logger.info('Webhook: Battery level changed for device with id ' + data.deviceId);
+                // @ts-ignore
+                controller.updateBattery(data.batteryLevel);
+                break;
+            case "lock-status-changed":
+                this.logger.info('Webhook: Lock status changed for device with id ' + data.deviceId);
+                // @ts-ignore
+                controller.updateState(data.state, data.jammed);
+                break;
+            default:
+                this.logger.warn('Webhook: Unknown event type ' + payload.event);
+                res.statusCode = 400;
+                res.end('Unknown event type');
+                return;
+        }
+
+        res.statusCode = 200;
+        res.end('Lock updated successfully');
     }
 
     /**
      * Is called when homebridge is shut down.
      */
-    public destroy() {
-        this.logger.info(`Shutting down timers...`);
-        if (this.updateHandle) {
-            clearInterval(this.updateHandle);
-            this.updateHandle = null;
+    public async destroy() {
+        if (this.callbackId) {
+            this.logger.info(`Deleting webhook callback...`);
+            await this.apiClient.deleteCallback(this.callbackId);
+        }
+        // Close the server
+        if (this.server) {
+            this.logger.info(`Shutting down webhook server...`);
+            await new Promise((resolve, reject) => {
+                // @ts-ignore
+                this.server.close((err) => {
+                    if (err) {
+                        reject(err);
+                    } else {
+                        resolve(null);
+                    }
+                });
+            });
         }
     }
 }
