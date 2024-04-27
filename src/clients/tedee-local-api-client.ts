@@ -11,16 +11,16 @@ export class TedeeLocalApiClient {
     private apiKey: string;
     private maxRetries: number
 
-    private error: Function;
-    private debug: Function;
+    private error: ((d: any) => void);
+    private debug: ((d: any) => void);
 
     constructor(
         ip: string,
         apiKey: string,
         timeout: number = 10000,
         maxRetries: number = 3,
-        error: (d: any) => void | undefined,
-        debug: (d: any) => void | undefined
+        error?: (d: any) => void,
+        debug?: (d: any) => void
     ) {
         this.apiKey = apiKey;
         this.maxRetries = maxRetries;
@@ -30,8 +30,13 @@ export class TedeeLocalApiClient {
             timeout: timeout
         });
 
-        this.error = error;
-        this.debug = debug;
+        this.error = error ?? ((e) => {
+            void (e)
+        });
+
+        this.debug = debug ?? ((e) => {
+            void (e)
+        });
 
         this.client.interceptors.request.use((config) => this.appendAuthHeader(config));
         this.client.interceptors.response.use((response) => response, (error) => this.handleErrorWithRetry(error));
