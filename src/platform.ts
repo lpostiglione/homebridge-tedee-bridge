@@ -128,7 +128,9 @@ export class Platform extends HomebridgePlatform<Configuration> {
             this.configuration.bridgeIp,
             this.configuration.apiKey,
             this.configuration.timeout,
-            this.configuration.maximumApiRetry
+            this.configuration.maximumApiRetry,
+            (e) => this.logger.error(e),
+            (d) => this.logger.debug(d)
         );
 
         this.logger.debug(`Initialized API client with IP ${this.configuration.bridgeIp} and API key ${this.configuration.apiKey}`);
