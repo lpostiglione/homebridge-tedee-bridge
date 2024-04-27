@@ -129,8 +129,18 @@ export class Platform extends HomebridgePlatform<Configuration> {
             this.configuration.maximumApiRetry
         );
 
-        // Gets the locks from the API
-        this.locks = await this.apiClient.getLockList();
+        this.logger.debug(`Initialized API client with IP ${this.configuration.bridgeIp} and API key ${this.configuration.apiKey}`);
+
+        try {
+            // Gets the locks from the API
+            this.locks = await this.apiClient.getLockList();
+        } catch (e) {
+            this.logger.warn('Failed to get locks from the API');
+            this.logger.debug(JSON.stringify(e));
+            return;
+        }
+        this.logger.debug(`Found ${this.locks.length} locks.`);
+        this.logger.debug(`Locks: ${JSON.stringify(this.locks)}`);
 
         let hasLocks = false;
         for (let lock of this.locks) {
