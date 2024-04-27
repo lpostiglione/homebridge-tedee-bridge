@@ -11,7 +11,17 @@ export class TedeeLocalApiClient {
     private apiKey: string;
     private maxRetries: number
 
-    constructor(ip: string, apiKey: string, timeout: number = 10000, maxRetries: number = 3) {
+    private error: Function;
+    private debug: Function;
+
+    constructor(
+        ip: string,
+        apiKey: string,
+        timeout: number = 10000,
+        maxRetries: number = 3,
+        error: (d: any) => void | undefined,
+        debug: (d: any) => void | undefined
+    ) {
         this.apiKey = apiKey;
         this.maxRetries = maxRetries;
         this.client = axios.create({
@@ -19,6 +29,9 @@ export class TedeeLocalApiClient {
             headers: {},
             timeout: timeout
         });
+
+        this.error = error;
+        this.debug = debug;
 
         this.client.interceptors.request.use((config) => this.appendAuthHeader(config));
         this.client.interceptors.response.use((response) => response, (error) => this.handleErrorWithRetry(error));
@@ -45,12 +58,17 @@ export class TedeeLocalApiClient {
             return Promise.reject(error);
         }
 
+
         config.retriesCount = config.retriesCount || 0;
 
         // Check if we should retry the request
         if (!config || !error.response || config.retriesCount >= this.maxRetries) {
             return Promise.reject(error);
         }
+
+        this.debug(`Request failed with status code ${error.response?.status}. Retrying...`);
+        this.debug(`Retry attempt ${config.retriesCount + 1} of ${this.maxRetries}`);
+        this.debug(JSON.stringify(error.response));
 
         // Increase the retry count
         config.retriesCount += 1;
@@ -60,6 +78,8 @@ export class TedeeLocalApiClient {
     }
 
     private handleError(error: any) {
+        this.error(error.response?.data || error.message);
+        this.debug(JSON.stringify(error));
         return Promise.reject(error.response?.data || error.message);
     }
 

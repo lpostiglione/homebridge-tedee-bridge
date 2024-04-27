@@ -105,7 +105,9 @@ export class Platform extends HomebridgePlatform<Configuration> {
                 this.configuration.bridgeIp,
                 this.configuration.apiKey,
                 this.configuration.timeout,
-                0
+                0,
+                (e) => this.logger.error(e),
+                (d) => this.logger.debug(d)
             );
             try {
                 response = await testClient.checkApiHealth();
@@ -175,9 +177,11 @@ export class Platform extends HomebridgePlatform<Configuration> {
         this.server = createServer((req, res) => this.handleWebhook(req, res))
             .listen(this.configuration.webhookPort);
         this.logger.info(`Webhook server started successfully!`);
+
         this.logger.info(`Registering webhook callback...`);
         const webhookUrl = `http://${this.getHomebridgeIpAddress()}:${this.configuration.webhookPort}/`;
         this.logger.debug(`Webhook URL: ${webhookUrl}`);
+
         let callback;
         try {
             callback = await this.apiClient.setMultipleCallbacks([{
