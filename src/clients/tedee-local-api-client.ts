@@ -26,7 +26,9 @@ export class TedeeLocalApiClient {
         this.maxRetries = maxRetries;
         this.client = axios.create({
             baseURL: 'http://' + ip + '/v1.0',
-            headers: {},
+            headers: {
+                accept: 'application/json'
+            },
             timeout: timeout
         });
 
@@ -62,7 +64,6 @@ export class TedeeLocalApiClient {
         if (!config) {
             return Promise.reject(error);
         }
-
 
         config.retriesCount = config.retriesCount || 0;
 
