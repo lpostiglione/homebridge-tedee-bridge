@@ -68,9 +68,18 @@ export class TedeeLocalApiClient {
         config.retriesCount = config.retriesCount || 0;
 
         // Check if we should retry the request
-        if (!config || !error.response || config.retriesCount >= this.maxRetries) {
+        if (!config || config.retriesCount >= this.maxRetries) {
             return Promise.reject(error);
         }
+
+        function pause(milliseconds: number) {
+            const dt = Date.now();
+            while (Date.now() - dt <= milliseconds) {
+                /* Do nothing */
+            }
+        }
+
+        pause(500);
 
         this.debug(`Request failed with status code ${error.response?.status}. Retrying...`);
         this.debug(`Retry attempt ${config.retriesCount + 1} of ${this.maxRetries}`);
