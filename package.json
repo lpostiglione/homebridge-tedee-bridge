@@ -1,7 +1,7 @@
 {
   "name": "homebridge-tedee-bridge",
   "displayName": "Tedee Bridge",
-  "version": "1.0.2-beta.2",
+  "version": "1.0.2-beta.3",
   "author": "Luca Postiglione",
   "homepage": "https://github.com/lpostiglione/homebridge-tedee-bridge",
   "description": "Homebridge plugin for the smart lock Tedee.",
