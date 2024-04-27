@@ -1,4 +1,3 @@
-
 /**
  * Represents a Tedee device in the homebridge configuration for the plugin.
  */
