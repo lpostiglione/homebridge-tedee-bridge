@@ -30,12 +30,6 @@ export interface Configuration {
     devices: Array<DeviceConfiguration>;
 
     /**
-     * Gets or sets the update interval for device data in seconds.
-     */
-    updateInterval: number;
-
-
-    /**
      * Gets or sets the Port for the Webhook.
      */
     webhookPort: number;

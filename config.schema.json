@@ -1,7 +1,7 @@
 {
-  "pluginAlias": "TedeePlatform",
+  "pluginAlias": "TedeeBridge",
   "pluginType": "platform",
-  "headerDisplay": "This project is a homebridge plugin for Tedee smart locks.",
+  "headerDisplay": "Connect your Tedee smart locks with homebridge.",
   "footerDisplay": "The Tedee bridge is required for this plugin to work.",
   "schema": {
     "type": "object",
@@ -82,13 +82,6 @@
             }
           }
         }
-      },
-      "updateInterval": {
-        "title": "Update Interval",
-        "type": "integer",
-        "default": 15,
-        "placeholder": "15",
-        "description": "The interval in seconds at which the lock state is updated from the API. (currently not used)"
       },
       "maximumApiRetry": {
         "title": "Maximum amount of retries",

@@ -43,7 +43,7 @@ export class Platform extends HomebridgePlatform<Configuration> {
      * Gets the name of the platform which is used in the configuration file.
      */
     public get platformName(): string {
-        return 'TedeePlatform';
+        return 'TedeeBridge';
     }
 
     /**
