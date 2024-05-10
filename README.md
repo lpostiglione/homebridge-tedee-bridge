@@ -8,8 +8,6 @@ The Tedee smart lock is exposed as a lock in HomeKit with support for:
 - Lock/Unlock/Unlatch
 - Battery status
 
-Optionally, a second switch is shown in the lock that represents the latch.
-
 ## Installation
 
 Please install the plugin with the following command:
@@ -60,7 +58,7 @@ npm install -g homebridge-tedee-bridge
 | Parameter                       | Required | Description                                                                                                                                                                                             |
 |---------------------------------|----------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `name`                          | **Yes**  | The name of the lock. This name has to match the name that is configured in the Tedee app                                                                                                               |
-| `ignored`                       | No       | If set to `true`, the lock will not be controlled by this plugin.                                                                                                                                       |
+| `ignored`                       | **Yes**  | If set to `true`, the lock will not be controlled by this plugin.                                                                                                                                       |
 
 ### API Key
 
@@ -82,12 +80,7 @@ More information can be found in the [Tedee API documentation](https://docs.tede
 * When you change the HomeKit switch from locked to unlocked, the smart door will unlock the door. If you have "auto
   pull spring" enabled in the Tedee app, it will also unlatch.
 * When you change the HomeKit switch from unlocked to unlocked, you have the unlatching enabled ("pull spring" in the
-  Tedee app) and the corresponding setting in the `config.json` is enabled (`unlatchFromUnlockedToUnlocked`), then the
-  lock will unlatch.
-* If you enabled the second switch for the latch in the `config.json` (`unlatchLock`), you can change the switch to
-  unlocked in order to unlatch the door. This only works if you have unlatching enabled ("pull spring") in the Tedee
-  app.
-* Changing the the second switch for the latch to unlocked when the door is locked, nothing is done.
+  Tedee app) then the lock will unlatch.
 
 ## Thanks
 
