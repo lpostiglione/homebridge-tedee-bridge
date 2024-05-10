@@ -1,5 +1,5 @@
-import {CommonDeviceEvent} from "./common-device-event";
+import {CommonDeviceEvent} from './common-device-event';
 
 export interface DeviceBatteryLevelChangedEvent extends CommonDeviceEvent {
-    batteryLevel: number;
+  batteryLevel: number;
 }

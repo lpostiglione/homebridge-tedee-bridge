@@ -1,5 +1,5 @@
-import {CommonDeviceEvent} from "./common-device-event";
+import {CommonDeviceEvent} from './common-device-event';
 
 export interface DeviceConnectionChangedEvent extends CommonDeviceEvent {
-    isConnected: 0 | 1;
+  isConnected: 0 | 1;
 }

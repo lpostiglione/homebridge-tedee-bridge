@@ -29,11 +29,7 @@ npm install -g homebridge-tedee-bridge
       "devices": [
         {
           "name": "DEVICE-NAME",
-          "unlatchFromUnlockedToUnlocked": false,
-          "unlatchLock": false,
-          "disableUnlock": false,
-          "defaultLockName": "Lock",
-          "defaultLatchName": "Latch"
+          "ignored": false
         }
       ],
       "bridgeIp": "TEDEE-BRIDGE-IP",
@@ -65,11 +61,6 @@ npm install -g homebridge-tedee-bridge
 |---------------------------------|----------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `name`                          | **Yes**  | The name of the lock. This name has to match the name that is configured in the Tedee app                                                                                                               |
 | `ignored`                       | No       | If set to `true`, the lock will not be controlled by this plugin.                                                                                                                                       |
-| `unlatchFromUnlockedToUnlocked` | No       | If set to `true`, the door is unlatched when you switch from "unlocked" to "unlocked" in the Home app. If set to `false`, nothing is done when you switch from "unlocked" to "unlocked" in the Home app |
-| `unlatchLock`                   | No       | If set to `true`, a second lock switch is exposed for unlatching the smart lock                                                                                                                         |
-| `disableUnlock`                 | No       | If set to `true`, you cannot unlock via HomeKit, only lock actions are executed                                                                                                                         |
-| `defaultLockName`               | No       | Lets you customize the name of the lock mechanism. Defaults to `Lock`                                                                                                                                   |
-| `defaultLatchName`              | No       | Lets you customize the name of the unlatch mechanism. Defaults to `Latch`                                                                                                                               |
 
 ### API Key
 

@@ -1,45 +1,46 @@
 {
   "name": "homebridge-tedee-bridge",
   "displayName": "Tedee Bridge",
-  "version": "1.0.2",
+  "version": "2.0.0-beta.1",
   "author": "Luca Postiglione",
   "homepage": "https://github.com/lpostiglione/homebridge-tedee-bridge",
   "description": "Homebridge plugin for the smart lock Tedee.",
   "license": "MIT",
-  "keywords": [
-    "homebrige",
-    "tedee",
-    "homebridge-plugin"
-  ],
   "repository": {
     "type": "git",
     "url": "git+https://github.com/lpostiglione/homebridge-tedee-bridge.git"
   },
-  "devDependencies": {
-    "@types/node": "^10",
-    "@types/qs": "6.5.1",
-    "hap-nodejs": "0.5.0",
-    "homebridge": "^1.8.0",
-    "rimraf": "3.0.2",
-    "typescript": "4.9.5"
-  },
-  "dependencies": {
-    "axios": "1.6.0",
-    "homebridge-framework": "1.0.6",
-    "local-devices": "^4.0.0",
-    "qs": "6.10.3"
-  },
   "bugs": {
     "url": "https://github.com/lpostiglione/homebridge-tedee-bridge/issues"
   },
+  "engines": {
+    "node": "^18.17.0 || ^20.9.0",
+    "homebridge": "^1.6.0"
+  },
   "main": "dist/index.js",
   "scripts": {
-    "debug": "rimraf dist/ && tsc && homebridge -D -U . -P .",
-    "build": "rimraf dist/ && tsc",
-    "prepublishOnly": "npm run build"
+    "lint": "eslint src/**/*.ts --max-warnings=0",
+    "watch": "npm run build && npm link && nodemon",
+    "build": "rimraf ./dist && tsc",
+    "prepublishOnly": "npm run lint && npm run build"
   },
-  "engines": {
-    "node": ">=10",
-    "homebridge": ">=0.2"
+  "keywords": [
+    "homebridge-plugin"
+  ],
+  "devDependencies": {
+    "@types/node": "^20.12.7",
+    "@typescript-eslint/eslint-plugin": "^7.7.0",
+    "@typescript-eslint/parser": "^7.7.0",
+    "eslint": "^8.57.0",
+    "homebridge": "^1.8.0",
+    "nodemon": "^3.1.0",
+    "rimraf": "^5.0.5",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.4.5"
+  },
+  "dependencies": {
+    "axios": "1.6.0",
+    "evilscan": "^1.9.1",
+    "qs": "6.10.3"
   }
 }

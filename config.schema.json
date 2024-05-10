@@ -3,6 +3,7 @@
   "pluginType": "platform",
   "headerDisplay": "Connect your Tedee smart locks with homebridge.",
   "footerDisplay": "The Tedee bridge is required for this plugin to work.",
+  "singular": true,
   "schema": {
     "type": "object",
     "properties": {
@@ -45,40 +46,12 @@
               "placeholder": "Device name from the app",
               "description": "The name of the lock. This name has to match the name that is configured in the Tedee app."
             },
-            "unlatchFromUnlockedToUnlocked": {
-              "title": "Unlatch (unlocked to unlocked)",
+            "ignore": {
+              "title": "Ignore device",
               "type": "boolean",
+              "required": true,
               "default": false,
-              "required": false,
-              "description": "If enabled, the door is unlatched when you switch from 'unlocked' to 'unlocked' in the Home app (this move is valid and works in the Home app, just hold down the switch, swipe it to 'locked' and then 'unlocked' without releasing your finger - do not release the finger until you reached the 'unlocked' position again). If disabled, nothing is done when you switch from 'unlocked' to 'unlocked' in the Home app. Only works if the latch is enabled ('pull spring' in the app)."
-            },
-            "unlatchLock": {
-              "title": "Unlatch lock",
-              "type": "boolean",
-              "default": false,
-              "required": false,
-              "description": "If enabled, a second lock switch is exposed for unlatching the smart lock. Only works if the latch is enabled ('pull spring' in the app)."
-            },
-            "disableUnlock": {
-              "title": "Disable unlock",
-              "type": "boolean",
-              "default": false,
-              "required": false,
-              "description": "If enabled, you cannot unlock via HomeKit, only lock actions are executed."
-            },
-            "defaultLockName": {
-              "title": "Default lock name",
-              "type": "string",
-              "default": "Lock",
-              "placeholder": "Lock",
-              "description": "Lets you customize the name of the lock mechanism. Useful for the Alexa plugin, which does not detect changes of service names in HomeKit."
-            },
-            "defaultLatchName": {
-              "title": "Default latch name",
-              "type": "string",
-              "default": "Latch",
-              "placeholder": "Latch",
-              "description": "Lets you customize the name of the unlatch mechanism. Useful for the Alexa plugin, which does not detect changes of service names in HomeKit."
+              "description": "If set to true, the device will be ignored and not added to HomeKit."
             }
           }
         }
