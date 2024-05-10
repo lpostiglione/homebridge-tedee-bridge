@@ -269,6 +269,9 @@ export class HomebridgeTedeePlatform implements DynamicPlatformPlugin {
   registerLocks(locks) {
     // loop over the discovered devices and register each one if it has not already been registered
     let hasLocks = false;
+
+    const validUuids: string[] = [];
+
     for (const lock of locks) {
       let deviceConfiguration = this.config.devices.find(l => l.name === lock.name);
       if (!deviceConfiguration) {
@@ -287,6 +290,7 @@ export class HomebridgeTedeePlatform implements DynamicPlatformPlugin {
       // something globally unique, but constant, for example, the device serial
       // number or MAC address
       const uuid = this.api.hap.uuid.generate(lock.serialNumber);
+      validUuids.push(uuid);
 
       // see if an accessory with the same uuid has already been registered and restored from
       // the cached devices we stored in the `configureAccessory` method above
@@ -338,6 +342,13 @@ export class HomebridgeTedeePlatform implements DynamicPlatformPlugin {
         this.activeLocks.push(lockAccessory);
 
         hasLocks = true;
+      }
+    }
+
+    for (const accessory of this.accessories) {
+      if (!validUuids.includes(accessory.UUID)) {
+        this.log.info('Removing existing accessory from cache:', accessory.displayName);
+        this.api.unregisterPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [accessory]);
       }
     }
 
