@@ -113,7 +113,7 @@ export class LockAccessory {
   /**
    * Handle requests to get the current value of the "Status Low Battery" characteristic
    */
-  async handleStatusLowBatteryGet() {
+  handleStatusLowBatteryGet() {
     this.platform.log.debug('Triggered GET StatusLowBattery');
 
     return (this.state.batteryLevel < 10 && !this.state.isCharging) ?
@@ -121,17 +121,17 @@ export class LockAccessory {
       this.platform.Characteristic.StatusLowBattery.BATTERY_LEVEL_NORMAL;
   }
 
-  async handleStatusBatteryLevelGet() {
+  handleStatusBatteryLevelGet() {
     return this.state.batteryLevel;
   }
 
-  async handleStatusChargingStateGet() {
+  handleStatusChargingStateGet() {
     return this.state.isCharging ?
       this.platform.Characteristic.ChargingState.CHARGING :
       this.platform.Characteristic.ChargingState.NOT_CHARGING;
   }
 
-  async handleLockCurrentStateGet() {
+  handleLockCurrentStateGet() {
     if (this.state.isJammed) {
       return this.platform.Characteristic.LockCurrentState.JAMMED;
     }
@@ -156,7 +156,7 @@ export class LockAccessory {
     }
   }
 
-  async handleLockTargetStateGet() {
+  handleLockTargetStateGet() {
     if (this.state.isJammed) {
       return this.platform.Characteristic.LockCurrentState.JAMMED;
     }
@@ -222,10 +222,15 @@ export class LockAccessory {
 
   public updateBattery(batteryLevel: number) {
     this.state.batteryLevel = batteryLevel;
+
+    this.battery.updateCharacteristic(this.platform.Characteristic.BatteryLevel, this.handleStatusBatteryLevelGet());
+    this.battery.updateCharacteristic(this.platform.Characteristic.StatusLowBattery, this.handleStatusLowBatteryGet());
   }
 
   public updateCharging(isCharging: 0 | 1) {
     this.state.isCharging = isCharging == 1;
+
+    this.battery.updateCharacteristic(this.platform.Characteristic.ChargingState, this.handleStatusChargingStateGet());
   }
 
   public updateState(state: LockState, jammed: 0 | 1) {
@@ -236,5 +241,8 @@ export class LockAccessory {
     this.state.state = state;
 
     this.state.isJammed = jammed == 1 || state == 0 || state == 1;
+
+    this.service.updateCharacteristic(this.platform.Characteristic.LockCurrentState, this.handleLockCurrentStateGet());
+    this.service.updateCharacteristic(this.platform.Characteristic.LockTargetState, this.handleLockTargetStateGet());
   }
 }
